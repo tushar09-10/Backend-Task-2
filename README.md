@@ -61,7 +61,7 @@ Response:
 
 ### WebSocket Updates
 
-Connect to: `ws://localhost:3000/ws/orders/{orderId}`
+Connect to: `wss://order-engine.up.railway.app/ws/orders/{orderId}`
 
 Events (in order):
 ```
@@ -93,29 +93,32 @@ Each event:
 
 ### Prerequisites
 - Node.js 20+
-- Docker (for Redis + PostgreSQL)
+- Redis Cloud account (or any remote Redis)
+- Railway PostgreSQL (or any remote PostgreSQL)
 
 ### Steps
 
 ```bash
 # 1. Clone and install
-git clone https://github.com/your-username/order-execution-engine.git
-cd order-execution-engine
+git clone https://github.com/tushar09-10/Backend-Task-2.git
+cd Backend-Task-2
 npm install
 
-# 2. Start dependencies
-docker-compose up -d
+# 2. Configure environment
+cp .env.example .env
+# Edit .env with your Redis Cloud and PostgreSQL credentials
 
 # 3. Setup database
-cp .env.example .env
-npm run db:push
 npm run db:generate
+npm run db:push
 
 # 4. Run server
 npm run dev
 ```
 
-Server runs on `http://localhost:3000`
+Server runs on `http://localhost:3000` (local development)
+
+For production, use the deployed Railway URL.
 
 ## Testing
 
@@ -144,9 +147,23 @@ Railway auto-detects Node.js and runs `npm start`.
 
 ### Environment Variables
 
+Required environment variables (see `.env.example`):
+
 ```
-DATABASE_URL=postgresql://...
-REDIS_URL=redis://...
+# Database (Railway PostgreSQL)
+DATABASE_URL=postgresql://user:password@host:port/database
+
+# Redis (Redis Cloud or Railway Redis)
+# Option 1: Redis URL (Railway Redis)
+REDIS_URL=redis://user:password@host:port
+
+# Option 2: Individual params (Redis Cloud)
+REDIS_HOST=redis-xxx.crce217.ap-south-1-1.ec2.cloud.redislabs.com
+REDIS_PORT=13668
+REDIS_USERNAME=default
+REDIS_PASSWORD=your-password-here
+
+# Server
 PORT=3000
 NODE_ENV=production
 ```
@@ -161,6 +178,10 @@ Import `postman/order-execution.json`:
 
 For WebSocket testing, use Postman's WebSocket feature or `wscat`:
 ```bash
+# Production (deployed)
+wscat -c wss://order-engine.up.railway.app/ws/orders/{orderId}
+
+# Local development
 wscat -c ws://localhost:3000/ws/orders/{orderId}
 ```
 
