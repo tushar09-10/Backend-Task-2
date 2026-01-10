@@ -15,10 +15,14 @@ export async function orderRoutes(fastify: FastifyInstance) {
             const body = executeOrderSchema.parse(request.body);
             const order = await createOrder(body);
 
+            const protocol = request.protocol === 'https' || process.env.NODE_ENV === 'production' ? 'wss' : 'ws';
+            const host = request.headers.host || 'localhost:3000';
+            const wsUrl = `${protocol}://${host}/ws/orders/${order.id}`;
+
             return reply.status(201).send({
                 orderId: order.id,
                 status: 'pending',
-                wsUrl: `/ws/orders/${order.id}`,
+                wsUrl,
                 message: 'Order created. Connect to WebSocket for live updates.',
             });
         } catch (err: any) {
