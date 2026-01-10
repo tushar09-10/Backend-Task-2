@@ -45,6 +45,11 @@ async function processOrder(job: Job<OrderPayload>): Promise<void> {
     let currentStatus = 'pending';
 
     try {
+        // Remove from Redis cache immediately - all reads should now go to PostgreSQL
+        // This ensures GET API returns real-time status during processing
+        await redis.del(`order:${order.orderId}`);
+        console.log(`[worker] order ${order.orderId} processing started, cache invalidated`);
+
         // routing
         emitStatus(order.orderId, 'routing');
         await updateOrderStatus(order.orderId, currentStatus, 'routing');
