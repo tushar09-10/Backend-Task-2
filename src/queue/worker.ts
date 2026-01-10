@@ -96,7 +96,7 @@ async function processOrder(job: Job<OrderPayload>): Promise<void> {
 
 export function createWorker() {
     const worker = new Worker<OrderPayload>('order-execution', processOrder, {
-        connection: createRedisConnection(),
+        connection: createRedisConnection() as any,
         concurrency: 10,
     });
 
