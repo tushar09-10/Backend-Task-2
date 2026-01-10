@@ -13,7 +13,7 @@ async function main() {
     // Run migrations at runtime in production (Railway recommended approach)
     if (process.env.NODE_ENV === 'production') {
         console.log('Running database migrations...');
-        execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+        execSync('npx prisma db push', { stdio: 'inherit' });
         console.log('Migrations complete.');
     }
 
