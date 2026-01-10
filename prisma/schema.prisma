@@ -1,0 +1,40 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Order {
+  id            String   @id @default(uuid())
+  pair          String
+  side          String
+  amount        Decimal
+  status        String   @default("pending")
+  dex           String?
+  txHash        String?
+  executedPrice Decimal?
+  slippage      Decimal?
+  error         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  transitions StatusTransition[]
+
+  @@index([status])
+  @@index([createdAt])
+}
+
+model StatusTransition {
+  id        String   @id @default(uuid())
+  orderId   String
+  fromState String
+  toState   String
+  timestamp DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+}

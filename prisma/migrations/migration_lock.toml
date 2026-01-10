@@ -1,0 +1,5 @@
+{
+  "migrationId": "20240110000000_init",
+  "feature_flags": [],
+  "migration_name": "init"
+}
