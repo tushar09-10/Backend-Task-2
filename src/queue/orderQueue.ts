@@ -2,7 +2,7 @@ import { Queue } from 'bullmq';
 import { createRedisConnection } from './connection';
 import { OrderPayload } from '../dex/types';
 
-const connection = createRedisConnection();
+const connection = createRedisConnection() as any;
 
 export const orderQueue = new Queue<OrderPayload>('order-execution', {
     connection,

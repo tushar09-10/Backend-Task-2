@@ -1,11 +1,38 @@
-import Redis from 'ioredis';
+import IORedis, { RedisOptions } from 'ioredis';
 
-const redisUrl = process.env.REDIS_URL || 'redis://localhost:6379';
+function getRedisConfig(): RedisOptions {
+    // Option 1: Full URL (Railway Redis)
+    if (process.env.REDIS_URL) {
+        return {
+            maxRetriesPerRequest: null,
+            enableReadyCheck: false,
+        };
+    }
 
-export const redis = new Redis(redisUrl, {
-    maxRetriesPerRequest: null, // required for BullMQ
-    enableReadyCheck: false,
-});
+    // Option 2: Individual params (Redis Cloud)
+    if (!process.env.REDIS_HOST || !process.env.REDIS_PASSWORD) {
+        throw new Error('REDIS_HOST and REDIS_PASSWORD are required when REDIS_URL is not set');
+    }
+
+    return {
+        host: process.env.REDIS_HOST,
+        port: parseInt(process.env.REDIS_PORT || '6379'),
+        username: process.env.REDIS_USERNAME || 'default',
+        password: process.env.REDIS_PASSWORD,
+        maxRetriesPerRequest: null,
+        enableReadyCheck: false,
+    };
+}
+
+function createConnection() {
+    const config = getRedisConfig();
+    if (process.env.REDIS_URL) {
+        return new IORedis(process.env.REDIS_URL, config);
+    }
+    return new IORedis(config);
+}
+
+export const redis = createConnection();
 
 redis.on('error', (err) => {
     console.error('redis connection error:', err.message);
@@ -16,8 +43,6 @@ redis.on('connect', () => {
 });
 
 export function createRedisConnection() {
-    return new Redis(redisUrl, {
-        maxRetriesPerRequest: null,
-        enableReadyCheck: false,
-    });
+    return createConnection();
 }
+
