@@ -1,5 +1,5 @@
 import { Worker, Job } from 'bullmq';
-import { createRedisConnection } from './connection';
+import { createRedisConnection, redis } from './connection';
 import { OrderPayload } from '../dex/types';
 import { fetchQuotes, selectBestQuote, executeOrder } from '../dex/router';
 import { wsManager } from '../ws/manager';
@@ -75,7 +75,10 @@ async function processOrder(job: Job<OrderPayload>): Promise<void> {
                 txHash: result.txHash,
                 executedPrice: result.executedPrice,
             });
-            console.log(`[worker] order ${order.orderId} confirmed: ${result.txHash}`);
+
+            // Remove from Redis cache - finalized orders should be read from DB
+            await redis.del(`order:${order.orderId}`);
+            console.log(`[worker] order ${order.orderId} confirmed, removed from cache`);
         } else {
             throw new Error(result.error || 'Execution failed');
         }
@@ -88,6 +91,10 @@ async function processOrder(job: Job<OrderPayload>): Promise<void> {
             await updateOrderStatus(order.orderId, currentStatus, 'failed', {
                 error: err.message,
             });
+
+            // Remove from Redis cache - finalized orders should be read from DB
+            await redis.del(`order:${order.orderId}`);
+            console.log(`[worker] order ${order.orderId} failed, removed from cache`);
         }
 
         throw err; // re-throw for retry
