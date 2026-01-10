@@ -1,6 +1,7 @@
 import Fastify from 'fastify';
 import cors from '@fastify/cors';
 import websocket from '@fastify/websocket';
+import { execSync } from 'child_process';
 import { orderRoutes } from './api/orders';
 import { wsRoutes } from './ws/handler';
 import { createWorker } from './queue/worker';
@@ -9,6 +10,13 @@ import prisma from './db';
 const PORT = parseInt(process.env.PORT || '3000');
 
 async function main() {
+    // Run migrations at runtime in production (Railway recommended approach)
+    if (process.env.NODE_ENV === 'production') {
+        console.log('Running database migrations...');
+        execSync('npx prisma migrate deploy', { stdio: 'inherit' });
+        console.log('Migrations complete.');
+    }
+
     const fastify = Fastify({
         logger: {
             level: 'info',
